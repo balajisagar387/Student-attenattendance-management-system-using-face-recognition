@@ -1,0 +1,23 @@
+# =======================================================
+# Student Attendance Management System - Dependencies
+# Install via: pip install -r requirements.txt
+# =======================================================
+
+# Modern Desktop UI
+customtkinter>=5.2.0
+Pillow>=10.0.0
+
+# Computer Vision & Real-time Face Pose Landmark Detection (Google)
+opencv-python>=4.8.0
+mediapipe>=0.10.0
+numpy>=1.24.0
+
+# Deep Learning Inference & Feature Embeddings (CPU-optimized, 100% Free)
+onnxruntime>=1.16.0
+
+# Database & Environment Configuration
+python-dotenv>=1.0.0
+mysql-connector-python>=8.0.0
+
+# Math, Vector Similarity & Machine Learning Utilities
+scikit-learn>=1.3.0

@@ -1,0 +1,39 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+
+# Virtual environments
+venv/
+.venv/
+env/
+
+# Environment variables & secrets
+.env
+.env.local
+
+# Local application databases
+*.sqlite3
+*.db
+data/*.db
+data/app.db
+
+# Dynamic student photos and models
+data/students/*
+!data/students/.gitkeep
+data/attendance/*
+!data/attendance/.gitkeep
+data/models/*
+!data/models/.gitkeep
+
+# IDEs & OS
+.vscode/
+.idea/
+Thumbs.db
+Desktop.ini
+.DS_Store
