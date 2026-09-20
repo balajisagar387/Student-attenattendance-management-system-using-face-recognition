@@ -35,6 +35,35 @@ class AttendanceService:
         return True
 
     @classmethod
+    def is_marked_today(cls, student_id: str) -> bool:
+        """Check if student is already marked present today."""
+        date_str = datetime.now().strftime("%d/%m/%Y")
+        existing = db.fetch_one(
+            "SELECT id FROM attendance WHERE student_id = %s AND log_date = %s",
+            (student_id, date_str)
+        )
+        return existing is not None
+
+    @classmethod
+    def get_today_marked_ids(cls) -> set:
+        """Get set of all student IDs already marked today."""
+        date_str = datetime.now().strftime("%d/%m/%Y")
+        records = db.fetch_all(
+            "SELECT student_id FROM attendance WHERE log_date = %s",
+            (date_str,)
+        )
+        return {r["student_id"] for r in records}
+
+    @classmethod
+    def get_today_records(cls) -> List[Dict[str, Any]]:
+        """Fetch all attendance records for today."""
+        date_str = datetime.now().strftime("%d/%m/%Y")
+        return db.fetch_all(
+            "SELECT * FROM attendance WHERE log_date = %s ORDER BY id DESC",
+            (date_str,)
+        )
+
+    @classmethod
     def _append_to_daily_csv(cls, student_id: str, roll_no: str, name: str, department: str, time_str: str, date_str: str):
         """Append record to daily CSV backup."""
         try:
