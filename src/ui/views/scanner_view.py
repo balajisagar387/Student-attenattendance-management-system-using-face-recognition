@@ -129,13 +129,15 @@ class ScannerView(tk.Frame):
         if ret and frame is not None:
             frame = cv2.flip(frame, 1)
 
-            # Evaluate face detection
-            eval_res = pose_estimator.evaluate_frame(frame)
-            box = eval_res.get("box")
-            crop = eval_res.get("crop")
+            detections = face_recognizer_service.recognize_faces_in_frame(frame)
 
-            if eval_res.get("face_detected") and crop is not None and crop.size > 0:
-                is_match, candidate, confidence = face_recognizer_service.recognize_face(crop)
+            for det in detections:
+                box = det["box"]
+                is_match = det["is_match"]
+                candidate = det["candidate"]
+                conf_pct = int(det["confidence"] * 100)
+
+                x, y, w, h = box
 
                 if is_match and candidate:
                     # Recognized Student
@@ -143,7 +145,6 @@ class ScannerView(tk.Frame):
                     roll = candidate["roll_no"]
                     s_id = str(candidate["student_id"])
                     dept = candidate["department"]
-                    conf_pct = int(confidence * 100)
 
                     if s_id in self.today_marked_ids:
                         # Already marked today: ignore duplicate table entry, display status on live camera!
@@ -164,15 +165,13 @@ class ScannerView(tk.Frame):
                     color = (0, 0, 255) # Red
                     label = "Unknown Face"
 
-                if box:
-                    x, y, w, h = box
-                    # Draw neat bounding box and label with shadow/background for maximum clarity
-                    cv2.rectangle(frame, (x, y), (x + w, y + h), color, 2)
-                    text_size, _ = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, 0.65, 2)
-                    text_w, text_h = text_size
-                    label_y = max(25, y - 10)
-                    cv2.rectangle(frame, (x, label_y - text_h - 4), (x + text_w + 6, label_y + 4), (20, 20, 20), -1)
-                    cv2.putText(frame, label, (x + 3, label_y), cv2.FONT_HERSHEY_SIMPLEX, 0.65, color, 2, cv2.LINE_AA)
+                # Draw neat bounding box and label with pill background for maximum clarity
+                cv2.rectangle(frame, (x, y), (x + w, y + h), color, 2)
+                text_size, _ = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, 0.65, 2)
+                text_w, text_h = text_size
+                label_y = max(25, y - 10)
+                cv2.rectangle(frame, (x, label_y - text_h - 4), (x + text_w + 6, label_y + 4), (20, 20, 20), -1)
+                cv2.putText(frame, label, (x + 3, label_y), cv2.FONT_HERSHEY_SIMPLEX, 0.65, color, 2, cv2.LINE_AA)
 
             photo = image_utils.cv2_to_photoimage(frame, (760, 520))
             self.cam_lbl.config(image=photo)

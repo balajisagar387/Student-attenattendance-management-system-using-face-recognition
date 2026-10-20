@@ -34,10 +34,13 @@ class Settings:
     MYSQL_PASSWORD: str = os.getenv("MYSQL_PASSWORD", "")
     MYSQL_DATABASE: str = os.getenv("MYSQL_DATABASE", "student_management")
 
-    # Camera & Vision Thresholds
     CAMERA_INDEX: int = int(os.getenv("CAMERA_INDEX", "0"))
     CONFIDENCE_THRESHOLD: float = float(os.getenv("CONFIDENCE_THRESHOLD", "0.60"))
     DETECTION_CONFIDENCE: float = float(os.getenv("DETECTION_CONFIDENCE", "0.50"))
+
+    # Strict Face Recognition Thresholds
+    FACE_MATCH_THRESHOLD: float = float(os.getenv("FACE_MATCH_THRESHOLD", "0.52")) # Cosine similarity threshold (strict >= 0.52)
+    FACE_MAX_L2_DISTANCE: float = float(os.getenv("FACE_MAX_L2_DISTANCE", "0.98")) # L2 distance threshold (strict <= 0.98)
 
     # Pose Guidance Limits (Degrees)
     MAX_YAW_ANGLE: float = 16.0     # Horizontal look angle limit

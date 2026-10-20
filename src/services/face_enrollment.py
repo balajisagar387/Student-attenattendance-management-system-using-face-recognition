@@ -11,35 +11,51 @@ class FaceEnrollmentService:
 
     def __init__(self):
         self.recognizer = None
-        self.init_sface()
+        self.detector = None
+        self.init_models()
 
-    def init_sface(self):
-        """Initialize OpenCV SFace Deep Face Recognition Model."""
+    def init_models(self):
+        """Initialize OpenCV SFace Deep Face Recognition Model and YuNet detector."""
         try:
+            yunet_model = settings.BASE_DIR / "data" / "face_detection_yunet.onnx"
             sface_model = settings.BASE_DIR / "data" / "face_recognition_sface.onnx"
+            if yunet_model.exists():
+                self.detector = cv2.FaceDetectorYN.create(str(yunet_model), "", (320, 320), 0.5)
             if sface_model.exists():
                 self.recognizer = cv2.FaceRecognizerSF.create(str(sface_model), "")
                 logger.info("OpenCV SFace deep neural network initialized for face enrollment.")
             else:
                 logger.warning(f"SFace model file not found at {sface_model}")
         except Exception as e:
-            logger.error(f"Failed to initialize SFace recognizer: {e}")
+            logger.error(f"Failed to initialize models: {e}")
 
-    def extract_embedding(self, face_crop: np.ndarray) -> np.ndarray:
+    def extract_embedding(self, img: np.ndarray) -> np.ndarray:
         """
-        Extract 128-dimensional deep feature embedding from face crop.
-        SFace produces distinct vectors for different individuals (similarity < 0.20 for different people, > 0.80 for same).
+        Extract 128-dimensional deep feature embedding from face image using landmark alignment (alignCrop).
         """
-        if face_crop is None or face_crop.size == 0:
+        if img is None or img.size == 0:
             return np.zeros(self.EMBEDDING_DIM, dtype=np.float32)
 
-        if not self.recognizer:
-            self.init_sface()
+        if not self.recognizer or not self.detector:
+            self.init_models()
 
         try:
-            # SFace expects standardized 112x112 input
-            resized = cv2.resize(face_crop, (112, 112))
+            h, w = img.shape[:2]
+            if self.detector:
+                self.detector.setInputSize((w, h))
+                _, faces = self.detector.detect(img)
+                if faces is not None and len(faces) > 0 and self.recognizer:
+                    aligned = self.recognizer.alignCrop(img, faces[0])
+                    feat = self.recognizer.feature(aligned)
+                    vec = feat.flatten().astype(np.float32)
+                    norm = np.linalg.norm(vec)
+                    if norm > 0:
+                        vec = vec / norm
+                    return vec
+
+            # Fallback to direct resize if YuNet did not catch tight crop
             if self.recognizer:
+                resized = cv2.resize(img, (112, 112))
                 feat = self.recognizer.feature(resized)
                 vec = feat.flatten().astype(np.float32)
                 norm = np.linalg.norm(vec)
@@ -49,7 +65,6 @@ class FaceEnrollmentService:
         except Exception as e:
             logger.error(f"SFace feature extraction failed: {e}")
 
-        # Fallback pseudo-embedding
         return np.zeros(self.EMBEDDING_DIM, dtype=np.float32)
 
     def save_enrolled_photo(self, student_id: str, face_crop: np.ndarray) -> Tuple[bool, Path, np.ndarray]:
